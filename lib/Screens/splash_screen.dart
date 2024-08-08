@@ -40,27 +40,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
-        child: ScaleTransition(
-          scale: _animation,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                'images/logo2.png',
-                width: 100,
-                height: 100,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'images/logo2.png',
+              width: 100,
+              height: 100,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Habit Tracker',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xff384cff),
               ),
-              SizedBox(height: 20),
-              Text(
-                'Habit Tracker',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff384cff),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

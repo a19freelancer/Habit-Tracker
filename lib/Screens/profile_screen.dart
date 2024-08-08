@@ -91,6 +91,16 @@ class ProfileScreen extends StatelessWidget {
               ),
               Divider(),
               ListTile(
+                leading: Icon(Icons.person),
+                title: Text('Profile'),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => EditProfileScreen()),
+                  );
+                },
+              ),
+              Divider(),
+              ListTile(
                 leading: Icon(Icons.logout),
                 title: Text(
                   'Logout',

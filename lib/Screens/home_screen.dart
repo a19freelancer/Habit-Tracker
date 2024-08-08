@@ -9,6 +9,7 @@ import '../Habit/habit_list.dart';
 import '../Habit/add_habit.dart';
 import '../Habit/today_habit.dart';
 import '../Habit/habit_details.dart';
+import 'drawer.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -19,27 +20,27 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.blue,
         title: Text('Habits For Current Month', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'todayHabits') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => TodayHabitsScreen()),
-                );
-              }
-            },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'todayHabits',
-                child: ListTile(
-                  leading: Icon(Icons.today),
-                  title: Text('Habits'),
-                ),
-              ),
-            ],
-          ),
-        ],
+        // actions: [
+        //   PopupMenuButton<String>(
+        //     onSelected: (value) {
+        //       if (value == 'todayHabits') {
+        //         Navigator.push(
+        //           context,
+        //           MaterialPageRoute(builder: (context) => TodayHabitsScreen()),
+        //         );
+        //       }
+        //     },
+        //     itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        //       const PopupMenuItem<String>(
+        //         value: 'todayHabits',
+        //         child: ListTile(
+        //           leading: Icon(Icons.today),
+        //           title: Text('Habits'),
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ],
       ),
       body: Column(
         children: [
@@ -89,59 +90,93 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      drawer: SideDrawer(),
     );
   }
 }
 
-class TodayHabitsList extends StatelessWidget {
+
+
+class TodayHabitsList extends StatefulWidget {
+  @override
+  _TodayHabitsListState createState() => _TodayHabitsListState();
+}
+
+class _TodayHabitsListState extends State<TodayHabitsList> {
   final String userEmail = FirebaseAuth.instance.currentUser!.email!;
   final DateTime now = DateTime.now();
+  String selectedFilter = 'Today';
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('habits')
-          .where('userEmail', isEqualTo: userEmail)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('😊 You have no habits.', style: TextStyle(fontSize: 18, color: Colors.grey)));
-        }
-
-        final habits = snapshot.data!.docs.where((habit) {
-          final List<dynamic> habitDates = habit['plannedDays'];
-          final todayDates = habitDates.where((timestamp) {
-            final date = (timestamp as Timestamp).toDate();
-            return date.day == now.day && date.month == now.month && date.year == now.year;
-          }).toList();
-          return todayDates.isNotEmpty;
-        }).toList();
-
-        if (habits.isEmpty) {
-          return Center(
-            child: Text(
-              'Congrats buddy, you do not have any habit today!',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-          );
-        }
-
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Hi buddy, you have the following habits today:',
-                style: TextStyle(fontSize: 18, color: Colors.black),
+    return Column(
+      children: [
+        // Filter Dropdown
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Text('Filter: ', style: TextStyle(fontSize: 16)),
+              DropdownButton<String>(
+                value: selectedFilter,
+                items: <String>['Today', 'This Week', 'This Month'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedFilter = newValue!;
+                  });
+                },
               ),
-            ),
-            Expanded(
-              child: ListView.builder(
+            ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('habits')
+                .where('userEmail', isEqualTo: userEmail)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return Center(child: Text('😊 You have no habits.', style: TextStyle(fontSize: 18, color: Colors.grey)));
+              }
+
+              final habits = snapshot.data!.docs.where((habit) {
+                final List<dynamic> habitDates = habit['plannedDays'];
+                return habitDates.any((timestamp) {
+                  final date = (timestamp as Timestamp).toDate();
+                  if (selectedFilter == 'Today') {
+                    return date.day == now.day && date.month == now.month && date.year == now.year;
+                  } else if (selectedFilter == 'This Week') {
+                    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+                    final endOfWeek = startOfWeek.add(Duration(days: 6));
+                    return date.isAfter(startOfWeek) && date.isBefore(endOfWeek.add(Duration(days: 1)));
+                  } else if (selectedFilter == 'This Month') {
+                    return date.month == now.month && date.year == now.year;
+                  }
+                  return false;
+                });
+              }).toList();
+
+              if (habits.isEmpty) {
+                return Center(
+                  child: Text(
+                    'Congrats buddy, you do not have any habit for $selectedFilter!',
+                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                  ),
+                );
+              }
+
+              return ListView.builder(
                 itemCount: habits.length,
                 itemBuilder: (context, index) {
                   final habit = habits[index];
@@ -196,12 +231,13 @@ class TodayHabitsList extends StatelessWidget {
                     ),
                   );
                 },
-              ),
-            ),
-          ],
-        );
-      },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
+
 

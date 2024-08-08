@@ -14,7 +14,7 @@ class _MainScreenState extends State<MainScreen> {
   static List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
     HabitProgressScreen(),
-    ProfileScreen(),
+    // ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -37,10 +37,10 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.show_chart),
             label: 'Progress',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+          // BottomNavigationBarItem(
+          //   icon: Icon(Icons.person),
+          //   label: 'Profile',
+          // ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
