@@ -109,7 +109,7 @@ class HabitsList extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '$monthName - $habitName',
+                          '$habitName',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,

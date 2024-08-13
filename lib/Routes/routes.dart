@@ -12,7 +12,7 @@ class Routes {
     GetPage(name: '/splash', page: () => SplashScreen()),
     GetPage(name: '/login', page: () => const LoginPage()),
     GetPage(name: '/signup', page: () => const SignUp()),
-    GetPage(name: '/home', page: () =>  MainScreen()),
+    GetPage(name: '/home', page: () =>  HomeScreen()),
 
   
   ];

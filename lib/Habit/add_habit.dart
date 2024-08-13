@@ -4,12 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:table_calendar/table_calendar.dart';
-
 class AddHabitScreen extends StatefulWidget {
   final HabitDetails? initialHabit;
 
@@ -27,6 +21,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   int _totalDays = 0;
 
   String? _habitId; // To store the document ID of the habit being edited, if applicable
+
+  DateTime _focusedDay = DateTime.now(); // Added this to track the focused day
 
   @override
   void initState() {
@@ -95,14 +91,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     ? Container(
                   height: 400, // Set a fixed height for the calendar
                   child: TableCalendar(
-                    firstDay: DateTime.now(),
-                    lastDay: DateTime(2100),
-                    focusedDay: DateTime.now(),
+                    firstDay: DateTime(2000), // Allows selection from any past date
+                    lastDay: DateTime(2100), // Allows selection far into the future
+                    focusedDay: _focusedDay, // Use the tracked focused day
                     selectedDayPredicate: (day) {
                       return _selectedDates.contains(day);
                     },
                     onDaySelected: (selectedDay, focusedDay) {
                       setState(() {
+                        _focusedDay = focusedDay; // Update the focused day
                         if (_selectedDates.contains(selectedDay)) {
                           _selectedDates.remove(selectedDay);
                         } else {
@@ -114,6 +111,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                             );
                           }
                         }
+                      });
+                    },
+                    onPageChanged: (focusedDay) {
+                      setState(() {
+                        _focusedDay = focusedDay; // Update the focused day on page change
                       });
                     },
                     calendarStyle: CalendarStyle(
@@ -203,9 +205,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       );
     }
   }
-
 }
-
 
 class HabitDetails {
   final String id;
