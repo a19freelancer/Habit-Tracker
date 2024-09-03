@@ -59,7 +59,7 @@ class HabitsList extends StatelessWidget {
           itemBuilder: (context, index) {
             final habit = habits[index];
             final habitName = habit['habitName'];
-            final totalDays = habit['totalDays'];
+            final totalDays = habit['totalDaysthisMonth'];
             final plannedDaysList = habit['plannedDays'] as List;
             final plannedDays = plannedDaysList.isEmpty ? 0 : plannedDaysList.length;
             final unplannedDays = habit['unplannedDays'];

@@ -167,13 +167,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       if (user != null) {
         String habitName = _habitNameController.text;
         int totalPlannedDays = _selectedDates.length;
-        int unplannedDays = (_totalDays * 12) - totalPlannedDays; // Total unplanned days in a year
+        int unplannedDays = _totalDays  - totalPlannedDays; // Total unplanned days in a year
 
         List<Timestamp> plannedDays = _selectedDates.map((date) => Timestamp.fromDate(date)).toList();
 
         if (_habitId != null) {
           await FirebaseFirestore.instance.collection('habits').doc(_habitId).set({
             'habitName': habitName,
+            'totalDaysthisMonth':_totalDays,
             'totalDays': _totalDays,
             'plannedDays': plannedDays,
             'totalPlannedDays': totalPlannedDays,
@@ -184,6 +185,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         } else {
           await FirebaseFirestore.instance.collection('habits').add({
             'habitName': habitName,
+            'totalDaysthisMonth':_totalDays,
             'totalDays': _totalDays,
             'plannedDays': plannedDays,
             'totalPlannedDays': totalPlannedDays,
