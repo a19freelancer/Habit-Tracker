@@ -103,16 +103,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                             color: isPastDate ? Colors.grey : Colors.black,
                           ),
                         ),
-                        trailing: Checkbox(
-                          value: isDoneList[index],
-                          onChanged: isPastDate
-                              ? null
-                              : (bool? value) {
-                            setState(() {
-                              isDoneList[index] = value ?? false;
-                            });
-                          },
-                        ),
+
                       ),
                     ),
                   );
@@ -122,15 +113,15 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ElevatedButton(
-                  onPressed: _markHabitDone,
-                  child: Text('Mark Habit Done' , style: TextStyle(color: Colors.white),),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                // ElevatedButton(
+                //   onPressed: _markHabitDone,
+                //   child: Text('Mark Habit Done' , style: TextStyle(color: Colors.white),),
+                //   style: ElevatedButton.styleFrom(
+                //     backgroundColor: Colors.blue,
+                //     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                //     textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                //   ),
+                // ),
               ],
             ),
           ],

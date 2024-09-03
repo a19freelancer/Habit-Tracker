@@ -20,9 +20,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   List<DateTime> _selectedDates = [];
   int _totalDays = 0;
 
-  String? _habitId; // To store the document ID of the habit being edited, if applicable
+  String? _habitId;
 
-  DateTime _focusedDay = DateTime.now(); // Added this to track the focused day
+  DateTime _focusedDay = DateTime.now();
 
   @override
   void initState() {
@@ -32,7 +32,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       _daysController.text = widget.initialHabit!.totalDays.toString();
       _selectedDates = widget.initialHabit!.plannedDays;
       _totalDays = widget.initialHabit!.totalDays;
-      _habitId = widget.initialHabit!.id; // Store the document ID
+      _habitId = widget.initialHabit!.id;
     }
   }
 
@@ -64,7 +64,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 SizedBox(height: 20),
                 TextFormField(
                   controller: _daysController,
-                  decoration: InputDecoration(labelText: 'Number of Days'),
+                  decoration: InputDecoration(labelText: 'Number of Days per Month'),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -77,7 +77,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   onChanged: (value) {
                     setState(() {
                       _totalDays = int.tryParse(value) ?? 0;
-                      _selectedDates.clear(); // Reset selected dates when number of days changes
+                      _selectedDates.clear();
                     });
                   },
                 ),
@@ -89,33 +89,23 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 SizedBox(height: 10),
                 _totalDays > 0
                     ? Container(
-                  height: 400, // Set a fixed height for the calendar
+                  height: 400,
                   child: TableCalendar(
-                    firstDay: DateTime(2000), // Allows selection from any past date
-                    lastDay: DateTime(2100), // Allows selection far into the future
-                    focusedDay: _focusedDay, // Use the tracked focused day
+                    firstDay: DateTime.now(),
+                    lastDay: DateTime.now().add(Duration(days: 365)), // One year range
+                    focusedDay: _focusedDay,
                     selectedDayPredicate: (day) {
                       return _selectedDates.contains(day);
                     },
                     onDaySelected: (selectedDay, focusedDay) {
                       setState(() {
-                        _focusedDay = focusedDay; // Update the focused day
-                        if (_selectedDates.contains(selectedDay)) {
-                          _selectedDates.remove(selectedDay);
-                        } else {
-                          if (_selectedDates.length < _totalDays) {
-                            _selectedDates.add(selectedDay);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Planned days cannot exceed the total number of days')),
-                            );
-                          }
-                        }
+                        _focusedDay = focusedDay;
+                        _handleDaySelection(selectedDay);
                       });
                     },
                     onPageChanged: (focusedDay) {
                       setState(() {
-                        _focusedDay = focusedDay; // Update the focused day on page change
+                        _focusedDay = focusedDay;
                       });
                     },
                     calendarStyle: CalendarStyle(
@@ -152,25 +142,36 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     );
   }
 
+  void _handleDaySelection(DateTime selectedDay) {
+    int selectedMonth = selectedDay.month;
+
+    // Count days already selected in the current month
+    int daysInMonth = _selectedDates.where((date) => date.month == selectedMonth).length;
+
+    if (_selectedDates.contains(selectedDay)) {
+      _selectedDates.remove(selectedDay);
+    } else {
+      if (daysInMonth < _totalDays) {
+        _selectedDates.add(selectedDay);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You can only select $_totalDays days in this month')),
+        );
+      }
+    }
+  }
+
   Future<void> _addOrUpdateHabit() async {
     if (_formKey.currentState!.validate()) {
-      if (_selectedDates.length > _totalDays) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Planned days cannot exceed the total number of days')),
-        );
-        return;
-      }
-
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         String habitName = _habitNameController.text;
         int totalPlannedDays = _selectedDates.length;
-        int unplannedDays = _totalDays - totalPlannedDays;
+        int unplannedDays = (_totalDays * 12) - totalPlannedDays; // Total unplanned days in a year
 
         List<Timestamp> plannedDays = _selectedDates.map((date) => Timestamp.fromDate(date)).toList();
 
         if (_habitId != null) {
-          // Update existing habit document with specific document ID (_habitId)
           await FirebaseFirestore.instance.collection('habits').doc(_habitId).set({
             'habitName': habitName,
             'totalDays': _totalDays,
@@ -179,9 +180,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             'unplannedDays': unplannedDays,
             'userEmail': user.email,
             'isDone': false,
-          }, SetOptions(merge: true)); // Use merge option to update existing fields without overwriting
+          }, SetOptions(merge: true));
         } else {
-          // Add new habit document
           await FirebaseFirestore.instance.collection('habits').add({
             'habitName': habitName,
             'totalDays': _totalDays,
