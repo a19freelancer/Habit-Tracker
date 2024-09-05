@@ -59,7 +59,7 @@ class HabitsList extends StatelessWidget {
           itemBuilder: (context, index) {
             final habit = habits[index];
             final habitName = habit['habitName'];
-            final totalDays = habit['totalDaysthisMonth'];
+            final totalDays = habit['totalDaysPerMonth'];
             final plannedDaysList = habit['plannedDays'] as List;
             final plannedDays = plannedDaysList.isEmpty ? 0 : plannedDaysList.length;
             final unplannedDays = habit['unplannedDays'];
@@ -130,7 +130,7 @@ class HabitsList extends StatelessWidget {
                         Icon(Icons.calendar_today, color: Colors.white),
                         SizedBox(width: 5),
                         Text(
-                          'Total Days: $totalDays',
+                          'Days per Month: $totalDays',
                           style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                       ],
@@ -143,7 +143,7 @@ class HabitsList extends StatelessWidget {
                         Text(
                           plannedDays == 0
                               ? 'No Planned Days Set'
-                              : 'Planned Days: $plannedDays',
+                              : 'Total Planned Days: $plannedDays',
                           style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                       ],
@@ -210,12 +210,13 @@ class HabitsList extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => AddHabitScreen(
                       initialHabit: HabitDetails(
-                        id: habit.id,
-                        habitName: habit['habitName'],
-                        totalDays: habit['totalDays'],
-                        plannedDays: List<DateTime>.from(
-                            (habit['plannedDays'] as List)
-                                .map((timestamp) => (timestamp as Timestamp).toDate())),
+                          id: habit.id,
+                          habitName: habit['habitName'],
+                          totalDays: habit['totalDaysPerMonth'],
+                          plannedDays: List<DateTime>.from(
+                              (habit['plannedDays'] as List)
+                                  .map((timestamp) => (timestamp as Timestamp).toDate())),
+                          startDate: (habit['startDate'] as Timestamp).toDate()
                       ),
                     ),
                   ),

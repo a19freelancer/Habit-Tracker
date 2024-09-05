@@ -17,12 +17,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _habitNameController = TextEditingController();
   final TextEditingController _daysController = TextEditingController();
-  List<DateTime> _selectedDates = [];
-  int _totalDays = 0;
+  Map<int, List<DateTime>> _selectedDatesPerMonth = {};
+  int _totalDaysPerMonth = 0;
+  int _totalUnplannedDays = 0;
+  int _initialDaysPerMonth = 0; // Initial days per month defined by user
 
   String? _habitId;
-
   DateTime _focusedDay = DateTime.now();
+  DateTime _habitStartDate = DateTime.now();
 
   @override
   void initState() {
@@ -30,17 +32,85 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (widget.initialHabit != null) {
       _habitNameController.text = widget.initialHabit!.habitName;
       _daysController.text = widget.initialHabit!.totalDays.toString();
-      _selectedDates = widget.initialHabit!.plannedDays;
-      _totalDays = widget.initialHabit!.totalDays;
+      _totalDaysPerMonth = widget.initialHabit!.totalDays;
       _habitId = widget.initialHabit!.id;
+      _habitStartDate = widget.initialHabit!.startDate;
+
+      // Populate _selectedDatesPerMonth and calculate unplanned days
+      widget.initialHabit!.plannedDays.forEach((date) {
+        int month = date.month;
+        if (!_selectedDatesPerMonth.containsKey(month)) {
+          _selectedDatesPerMonth[month] = [];
+        }
+        _selectedDatesPerMonth[month]!.add(date);
+      });
+
+      _calculateUnplannedDays();
     }
   }
+
+  void _calculateUnplannedDays() {
+    DateTime currentMonthStart = DateTime(_focusedDay.year, _focusedDay.month, 1);
+    DateTime habitStartMonth = DateTime(_habitStartDate.year, _habitStartDate.month, 1);
+
+    // Calculate the number of complete months that have passed, excluding the current month
+    int monthsElapsed = (currentMonthStart.year - habitStartMonth.year) * 12 +
+        (currentMonthStart.month - habitStartMonth.month);
+
+    // Total possible days up to the month before the current month
+    int totalPossibleDays = monthsElapsed * _initialDaysPerMonth;
+
+    // Calculate the total number of planned days so far
+    int totalPlannedDays = 0;
+    _selectedDatesPerMonth.forEach((month, dates) {
+      if (month != currentMonthStart.month) {
+        totalPlannedDays += dates.length;
+      }
+    });
+
+    // Calculate unplanned days
+    _totalUnplannedDays = totalPossibleDays - totalPlannedDays;
+
+    // Ensure that unplanned days don't drop below zero
+    if (_totalUnplannedDays < 0) {
+      _totalUnplannedDays = 0;
+    }
+  }
+
+  void _calculateUnplannedDays2() {
+    DateTime currentMonthStart = DateTime(_focusedDay.year, _focusedDay.month, 1);
+    DateTime habitStartMonth = DateTime(_habitStartDate.year, _habitStartDate.month, 1);
+
+    // Calculate the number of complete months that have passed, excluding the current month
+    int monthsElapsed = (currentMonthStart.year - habitStartMonth.year) * 12 +
+        (currentMonthStart.month - habitStartMonth.month)+1;
+
+    // Total possible days up to the month before the current month
+    int totalPossibleDays = monthsElapsed * _initialDaysPerMonth;
+
+    // Calculate the total number of planned days so far
+    int totalPlannedDays = 0;
+    _selectedDatesPerMonth.forEach((month, dates) {
+
+      totalPlannedDays += dates.length;
+
+    });
+
+    // Calculate unplanned days
+    _totalUnplannedDays = totalPossibleDays - totalPlannedDays;
+
+    // Ensure that unplanned days don't drop below zero
+    if (_totalUnplannedDays < 0) {
+      _totalUnplannedDays = 0;
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add New Habit'),
+        title: Text(widget.initialHabit != null ? 'Edit Habit' : 'Add New Habit'),
         backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
@@ -76,26 +146,28 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   },
                   onChanged: (value) {
                     setState(() {
-                      _totalDays = int.tryParse(value) ?? 0;
-                      _selectedDates.clear();
+                      _initialDaysPerMonth = int.tryParse(value) ?? 0;
+                      _totalDaysPerMonth = _initialDaysPerMonth;
+                      _selectedDatesPerMonth.clear();
+                      _calculateUnplannedDays();
                     });
                   },
                 ),
                 SizedBox(height: 20),
                 Text(
                   'Select Dates',
-                  style: TextStyle(fontSize: 18, color: _totalDays > 0 ? Colors.black : Colors.grey),
+                  style: TextStyle(fontSize: 18, color: _totalDaysPerMonth > 0 ? Colors.black : Colors.grey),
                 ),
                 SizedBox(height: 10),
-                _totalDays > 0
+                _totalDaysPerMonth > 0
                     ? Container(
                   height: 400,
                   child: TableCalendar(
-                    firstDay: DateTime.now(),
-                    lastDay: DateTime.now().add(Duration(days: 365)), // One year range
+                    firstDay: _habitStartDate,
+                    lastDay: DateTime.now().add(Duration(days: 365)),
                     focusedDay: _focusedDay,
                     selectedDayPredicate: (day) {
-                      return _selectedDates.contains(day);
+                      return _isDaySelected(day);
                     },
                     onDaySelected: (selectedDay, focusedDay) {
                       setState(() {
@@ -124,14 +196,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     : Container(),
                 SizedBox(height: 10),
                 Text(
-                  _selectedDates.isEmpty
+                  _selectedDatesPerMonth.isEmpty
                       ? 'No dates selected'
-                      : 'Selected dates: ${_selectedDates.map((date) => DateFormat('yyyy-MM-dd').format(date)).join(', ')}',
+                      : 'Selected dates: ${_getSelectedDatesFormatted()}',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: _totalDays > 0 ? _addOrUpdateHabit : null,
+                  onPressed: _totalDaysPerMonth > 0 ? _addOrUpdateHabit : null,
                   child: Text(widget.initialHabit != null ? 'Update Habit' : 'Add Habit'),
                 ),
               ],
@@ -142,23 +214,45 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     );
   }
 
+  bool _isDaySelected(DateTime day) {
+    int month = day.month;
+    return _selectedDatesPerMonth[month]?.contains(day) ?? false;
+  }
+
   void _handleDaySelection(DateTime selectedDay) {
-    int selectedMonth = selectedDay.month;
+    _focusedDay=selectedDay;
+    int month = selectedDay.month;
 
-    // Count days already selected in the current month
-    int daysInMonth = _selectedDates.where((date) => date.month == selectedMonth).length;
+    // Initialize the month list if not already
+    if (!_selectedDatesPerMonth.containsKey(month)) {
+      _selectedDatesPerMonth[month] = [];
 
-    if (_selectedDates.contains(selectedDay)) {
-      _selectedDates.remove(selectedDay);
+    }
+    _calculateUnplannedDays();
+    List<DateTime> selectedDaysForMonth = _selectedDatesPerMonth[month]!;
+    print(_initialDaysPerMonth);
+    print(_totalUnplannedDays);
+    int availableDaysForMonth = _initialDaysPerMonth+_totalUnplannedDays;
+
+    if (selectedDaysForMonth.contains(selectedDay)) {
+      selectedDaysForMonth.remove(selectedDay);
     } else {
-      if (daysInMonth < _totalDays) {
-        _selectedDates.add(selectedDay);
+      if (selectedDaysForMonth.length < availableDaysForMonth) {
+        selectedDaysForMonth.add(selectedDay);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('You can only select $_totalDays days in this month')),
+          SnackBar(content: Text('You can only select $availableDaysForMonth days this month')),
         );
       }
     }
+  }
+
+  String _getSelectedDatesFormatted() {
+    List<String> formattedDates = [];
+    _selectedDatesPerMonth.forEach((month, dates) {
+      formattedDates.addAll(dates.map((date) => DateFormat('yyyy-MM-dd').format(date)));
+    });
+    return formattedDates.join(', ');
   }
 
   Future<void> _addOrUpdateHabit() async {
@@ -166,45 +260,36 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         String habitName = _habitNameController.text;
-        int totalPlannedDays = _selectedDates.length;
-        int unplannedDays = _totalDays  - totalPlannedDays; // Total unplanned days in a year
 
-        List<Timestamp> plannedDays = _selectedDates.map((date) => Timestamp.fromDate(date)).toList();
-
+        List<Timestamp> plannedDays = _selectedDatesPerMonth.values
+            .expand((dates) => dates)
+            .map((date) => Timestamp.fromDate(date))
+            .toList();
+        _calculateUnplannedDays2();
         if (_habitId != null) {
           await FirebaseFirestore.instance.collection('habits').doc(_habitId).set({
             'habitName': habitName,
-            'totalDaysthisMonth':_totalDays,
-            'totalDays': _totalDays,
+            'totalDaysPerMonth': _totalDaysPerMonth,
             'plannedDays': plannedDays,
-            'totalPlannedDays': totalPlannedDays,
-            'unplannedDays': unplannedDays,
             'userEmail': user.email,
             'isDone': false,
+            'startDate': _habitStartDate,
+            'unplannedDays':_totalUnplannedDays
           }, SetOptions(merge: true));
         } else {
           await FirebaseFirestore.instance.collection('habits').add({
             'habitName': habitName,
-            'totalDaysthisMonth':_totalDays,
-            'totalDays': _totalDays,
+            'totalDaysPerMonth': _totalDaysPerMonth,
             'plannedDays': plannedDays,
-            'totalPlannedDays': totalPlannedDays,
-            'unplannedDays': unplannedDays,
             'userEmail': user.email,
             'isDone': false,
+            'startDate': _habitStartDate,
+            'unplannedDays':_totalUnplannedDays
           });
         }
 
         Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No user is logged in')),
-        );
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter the necessary details')),
-      );
     }
   }
 }
@@ -214,11 +299,13 @@ class HabitDetails {
   final String habitName;
   final int totalDays;
   final List<DateTime> plannedDays;
+  final DateTime startDate;
 
   HabitDetails({
     required this.id,
     required this.habitName,
     required this.totalDays,
     required this.plannedDays,
+    required this.startDate,
   });
 }
