@@ -212,10 +212,8 @@ class HabitsList extends StatelessWidget {
                       initialHabit: HabitDetails(
                           id: habit.id,
                           habitName: habit['habitName'],
-                          totalDays: habit['totalDaysPerMonth'],
-                          plannedDays: List<DateTime>.from(
-                              (habit['plannedDays'] as List)
-                                  .map((timestamp) => (timestamp as Timestamp).toDate())),
+                          totalDays: 0,
+                          plannedDays: [],
                           startDate: (habit['startDate'] as Timestamp).toDate()
                       ),
                     ),
