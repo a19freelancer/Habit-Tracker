@@ -17,7 +17,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _habitNameController = TextEditingController();
   final TextEditingController _daysController = TextEditingController();
-  Map<int, List<DateTime>> _selectedDatesPerMonth = {};
+  Map<int, List<DateTime>> _selectedDatesPerMonth ={};
   int _totalDaysPerMonth = 0;
   int _totalUnplannedDays = 0;
   int _initialDaysPerMonth = 0; // Initial days per month defined by user
@@ -53,20 +53,21 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     DateTime currentMonthStart = DateTime(_focusedDay.year, _focusedDay.month, 1);
     DateTime habitStartMonth = DateTime(_habitStartDate.year, _habitStartDate.month, 1);
 
-    // Calculate the number of complete months that have passed, excluding the current month
+    // Calculate the number of complete months that have passed, including the current month
     int monthsElapsed = (currentMonthStart.year - habitStartMonth.year) * 12 +
-        (currentMonthStart.month - habitStartMonth.month);
+        (currentMonthStart.month - habitStartMonth.month) + 1;
 
-    // Total possible days up to the month before the current month
-    int totalPossibleDays = monthsElapsed * _initialDaysPerMonth;
+    // Total possible days up to and including the current month
+    int totalPossibleDays = monthsElapsed * _totalDaysPerMonth;
 
-    // Calculate the total number of planned days so far
+    // Calculate the total number of planned days so far, including the current month
     int totalPlannedDays = 0;
     _selectedDatesPerMonth.forEach((month, dates) {
-      if (month != currentMonthStart.month) {
-        totalPlannedDays += dates.length;
-      }
+      totalPlannedDays += dates.length;
     });
+
+
+
 
     // Calculate unplanned days
     _totalUnplannedDays = totalPossibleDays - totalPlannedDays;
@@ -75,7 +76,10 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     if (_totalUnplannedDays < 0) {
       _totalUnplannedDays = 0;
     }
+
+
   }
+
 
   void _calculateUnplannedDays2() {
     DateTime currentMonthStart = DateTime(_focusedDay.year, _focusedDay.month, 1);
@@ -136,23 +140,31 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   controller: _daysController,
                   decoration: InputDecoration(labelText: 'Number of Days per Month'),
                   keyboardType: TextInputType.number,
+                  readOnly: widget.initialHabit != null, // Makes the field read-only if habit exists
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the number of days';
-                    } else if (int.tryParse(value) == null || int.parse(value) <= 0) {
-                      return 'Please enter a valid number of days';
+                    if (widget.initialHabit == null) {// Only validate if adding a new habit
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the number of days';
+                      } else if (int.tryParse(value) == null || int.parse(value) <= 0) {
+                        return 'Please enter a valid number of days';
+                      }
                     }
+
+
                     return null;
                   },
                   onChanged: (value) {
-                    setState(() {
-                      _initialDaysPerMonth = int.tryParse(value) ?? 0;
-                      _totalDaysPerMonth = _initialDaysPerMonth;
-                      _selectedDatesPerMonth.clear();
-                      _calculateUnplannedDays();
-                    });
+                    if (widget.initialHabit == null) { // Only allow changes if adding a new habit
+                      setState(() {
+                        _initialDaysPerMonth = int.tryParse(value) ?? 0;
+                        _totalDaysPerMonth = _initialDaysPerMonth;
+                        _selectedDatesPerMonth.clear();
+                        _calculateUnplannedDays();
+                      });
+                    }
                   },
                 ),
+
                 SizedBox(height: 20),
                 Text(
                   'Select Dates',
@@ -167,6 +179,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     lastDay: DateTime.now().add(Duration(days: 365)),
                     focusedDay: _focusedDay,
                     selectedDayPredicate: (day) {
+                      // Check if the day is in the list of planned days for the respective month
                       return _isDaySelected(day);
                     },
                     onDaySelected: (selectedDay, focusedDay) {
@@ -190,17 +203,17 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                         color: Colors.orange,
                         shape: BoxShape.circle,
                       ),
+                      // Optionally, you can customize the already selected (planned) days
+                      markerDecoration: BoxDecoration(
+                        color: Colors.green,  // Mark planned days with a green dot
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
+
                 )
                     : Container(),
-                SizedBox(height: 10),
-                Text(
-                  _selectedDatesPerMonth.isEmpty
-                      ? 'No dates selected'
-                      : 'Selected dates: ${_getSelectedDatesFormatted()}',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
+
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _totalDaysPerMonth > 0 ? _addOrUpdateHabit : null,
@@ -214,38 +227,75 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     );
   }
 
+  bool isSameDate(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
   bool _isDaySelected(DateTime day) {
-    int month = day.month;
-    return _selectedDatesPerMonth[month]?.contains(day) ?? false;
+
+    DateTime dayWithoutTimezone = DateTime(day.year, day.month, day.day);
+    int month = dayWithoutTimezone.month;
+    List<DateTime>? selectedDates = _selectedDatesPerMonth[month];
+    bool  isSelected=false;
+    if(selectedDates!=null){
+      isSelected = selectedDates.any((selectedDate) => isSameDate(selectedDate, day));_selectedDatesPerMonth[month]?.contains(dayWithoutTimezone) ?? false;
+    }
+    // If the day is selected, print the date
+    print('Day: $dayWithoutTimezone');
+    print('Month: $month');
+    print(_selectedDatesPerMonth);
+    print(widget.initialHabit?.plannedDays);
+    if (isSelected) {
+      print("Selected Date: ${day.toString()}");
+    }
+
+    return isSelected;
   }
 
-  void _handleDaySelection(DateTime selectedDay) {
-    _focusedDay=selectedDay;
-    int month = selectedDay.month;
 
-    // Initialize the month list if not already
+  void _handleDaySelection(DateTime selectedDay) {
+    print('unplanned days before $_totalUnplannedDays');
+    // Strip the time component from the selected day
+    DateTime dayWithoutTimezone = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+    int month = dayWithoutTimezone.month;
+    List<DateTime>? selectedDates = _selectedDatesPerMonth[month];
+    _focusedDay = dayWithoutTimezone;
+
+    // Initialize the month list if not already initialized
     if (!_selectedDatesPerMonth.containsKey(month)) {
       _selectedDatesPerMonth[month] = [];
-
     }
+
     _calculateUnplannedDays();
     List<DateTime> selectedDaysForMonth = _selectedDatesPerMonth[month]!;
-    print(_initialDaysPerMonth);
-    print(_totalUnplannedDays);
-    int availableDaysForMonth = _initialDaysPerMonth+_totalUnplannedDays;
 
-    if (selectedDaysForMonth.contains(selectedDay)) {
-      selectedDaysForMonth.remove(selectedDay);
+    int availableDaysForMonth = _totalDaysPerMonth + _totalUnplannedDays;
+
+    // Check if the day is already selected by comparing only the date (not time)
+    bool isAlreadySelected = selectedDaysForMonth.any(
+            (selectedDate) => selectedDate.year == dayWithoutTimezone.year && selectedDate.month == dayWithoutTimezone.month && selectedDate.day == dayWithoutTimezone.day);
+
+    if (isAlreadySelected) {
+      // Unselect the day if already selected
+      selectedDaysForMonth.removeWhere(
+            (selectedDate) => selectedDate.year == dayWithoutTimezone.year && selectedDate.month == dayWithoutTimezone.month && selectedDate.day == dayWithoutTimezone.day,
+      );
+
     } else {
+      // Add the day if it's not already selected and within the limit
       if (selectedDaysForMonth.length < availableDaysForMonth) {
-        selectedDaysForMonth.add(selectedDay);
+        selectedDaysForMonth.add(dayWithoutTimezone);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('You can only select $availableDaysForMonth days this month')),
         );
       }
     }
+    _calculateUnplannedDays();
+    print('unplanned days after$_totalUnplannedDays');
   }
+
 
   String _getSelectedDatesFormatted() {
     List<String> formattedDates = [];
@@ -265,7 +315,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             .expand((dates) => dates)
             .map((date) => Timestamp.fromDate(date))
             .toList();
-        _calculateUnplannedDays2();
+        _calculateUnplannedDays();
         if (_habitId != null) {
           await FirebaseFirestore.instance.collection('habits').doc(_habitId).set({
             'habitName': habitName,
