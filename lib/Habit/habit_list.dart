@@ -119,7 +119,22 @@ class HabitsList extends StatelessWidget {
                         IconButton(
                           icon: Icon(Icons.edit, color: Colors.green),
                           onPressed: () {
-                            _showReplanConfirmationDialog(context, habit);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddHabitScreen(
+                                  initialHabit: HabitDetails(
+                                      id: habit.id,
+                                      habitName: habit['habitName'],
+                                      totalDays: habit['totalDaysPerMonth'],
+                                      plannedDays: List<DateTime>.from(
+                                          (habit['plannedDays'] as List)
+                                              .map((timestamp) => (timestamp as Timestamp).toDate())),
+                                      startDate: (habit['startDate'] as Timestamp).toDate()
+                                  ),
+                                ),
+                              ),
+                            );
                           },
                         ),
                       ],

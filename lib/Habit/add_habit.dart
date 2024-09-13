@@ -141,16 +141,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                   decoration: InputDecoration(labelText: 'Number of Days per Month'),
                   keyboardType: TextInputType.number,
                   readOnly: widget.initialHabit != null, // Makes the field read-only if habit exists
+                  enabled: widget.initialHabit == null, // Disables the input if a habit already exists
                   validator: (value) {
-                    if (widget.initialHabit == null) {// Only validate if adding a new habit
+                    if (widget.initialHabit == null) { // Only validate if adding a new habit
                       if (value == null || value.isEmpty) {
                         return 'Please enter the number of days';
                       } else if (int.tryParse(value) == null || int.parse(value) <= 0) {
                         return 'Please enter a valid number of days';
                       }
                     }
-
-
                     return null;
                   },
                   onChanged: (value) {
@@ -163,7 +162,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       });
                     }
                   },
+                  style: widget.initialHabit != null
+                      ? TextStyle(color: Colors.grey) // Style to make it look like plain text when not editable
+                      : null,
                 ),
+
 
                 SizedBox(height: 20),
                 Text(
@@ -173,43 +176,90 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 SizedBox(height: 10),
                 _totalDaysPerMonth > 0
                     ? Container(
-                  height: 400,
-                  child: TableCalendar(
-                    firstDay: _habitStartDate,
-                    lastDay: DateTime.now().add(Duration(days: 365)),
-                    focusedDay: _focusedDay,
-                    selectedDayPredicate: (day) {
-                      // Check if the day is in the list of planned days for the respective month
-                      return _isDaySelected(day);
-                    },
-                    onDaySelected: (selectedDay, focusedDay) {
-                      setState(() {
-                        _focusedDay = focusedDay;
-                        _handleDaySelection(selectedDay);
-                      });
-                    },
-                    onPageChanged: (focusedDay) {
-                      setState(() {
-                        _focusedDay = focusedDay;
-                      });
-                    },
-                    calendarStyle: CalendarStyle(
-                      isTodayHighlighted: true,
-                      selectedDecoration: BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
+                    height: 400,
+                    child: TableCalendar(
+                      firstDay: _habitStartDate,
+                      lastDay: DateTime.now().add(Duration(days: 365)),
+                      focusedDay: _focusedDay,
+                      selectedDayPredicate: (day) {
+                        return _isDaySelected(day)&& day.isAfter(DateTime.now()); // Highlight selected days
+                      },
+                      enabledDayPredicate: (day) {
+                        // Allow all days to be "enabled"
+                        return true;
+                      },
+                      onDaySelected: (selectedDay, focusedDay) {
+                        if (!selectedDay.isBefore(DateTime.now())) {
+                          setState(() {
+                            _focusedDay = focusedDay;
+                            _handleDaySelection(selectedDay);
+                          });
+                        }
+                        // If past day is selected, do nothing (read-only)
+                      },
+                      onPageChanged: (focusedDay) {
+                        setState(() {
+                          _focusedDay = focusedDay;
+                        });
+                      },
+                      calendarStyle: CalendarStyle(
+                        isTodayHighlighted: true,
+                        selectedDecoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                        todayDecoration: BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                        ),
+                        defaultDecoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                        ),
+                        selectedTextStyle: TextStyle(
+                          color: Colors.white,
+                        ),
+                        // Customize the text style for past days
+                        disabledTextStyle: TextStyle(
+                          color: Colors.grey, // Make past days look like they are disabled
+                        ),
                       ),
-                      todayDecoration: BoxDecoration(
-                        color: Colors.orange,
-                        shape: BoxShape.circle,
+                      calendarBuilders: CalendarBuilders(
+                        defaultBuilder: (context, day, focusedDay) {
+                          // Apply custom decoration for past selected days
+                          if (_isDaySelected(day) && day.isBefore(DateTime.now())) {
+                            return Padding(
+
+                              padding: EdgeInsets.all(5),
+                              child: Container(
+
+                                decoration: BoxDecoration(
+                                  color: Colors.blueGrey.withOpacity(0.5), // Custom decoration for past selected days
+                                  shape: BoxShape.circle,
+
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    day.day.toString(),
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          // Apply custom text color for past days
+                          if (day.isBefore(DateTime.now())) {
+                            return Center(
+                              child: Text(
+                                day.day.toString(),
+                                style: TextStyle(color: Colors.grey), // Disabled color for past days
+                              ),
+                            );
+                          }
+                          return null; // Use default decoration for other days
+                        },
                       ),
-                      // Optionally, you can customize the already selected (planned) days
-                      markerDecoration: BoxDecoration(
-                        color: Colors.green,  // Mark planned days with a green dot
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
+                    )
+
 
                 )
                     : Container(),
