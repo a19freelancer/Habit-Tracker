@@ -182,14 +182,20 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       lastDay: DateTime.now().add(Duration(days: 365)),
                       focusedDay: _focusedDay,
                       selectedDayPredicate: (day) {
-                        return _isDaySelected(day)&& day.isAfter(DateTime.now()); // Highlight selected days
+                        DateTime now = DateTime.now();
+                        DateTime today = DateTime(now.year, now.month, now.day);
+                        DateTime selectedDate = DateTime(day.year, day.month, day.day);
+
+                        return _isDaySelected(day) && (selectedDate.isAfter(today) || selectedDate == today);
                       },
                       enabledDayPredicate: (day) {
                         // Allow all days to be "enabled"
                         return true;
                       },
                       onDaySelected: (selectedDay, focusedDay) {
-                        if (!selectedDay.isBefore(DateTime.now())) {
+                        DateTime now = DateTime.now();
+                        DateTime today = DateTime(now.year, now.month, now.day);
+                        if (!selectedDay.isBefore(today)) {
                           setState(() {
                             _focusedDay = focusedDay;
                             _handleDaySelection(selectedDay);
@@ -226,7 +232,11 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       calendarBuilders: CalendarBuilders(
                         defaultBuilder: (context, day, focusedDay) {
                           // Apply custom decoration for past selected days
-                          if (_isDaySelected(day) && day.isBefore(DateTime.now())) {
+                          DateTime now = DateTime.now();
+                          DateTime today = DateTime(now.year, now.month, now.day);
+                          DateTime selectedDate = DateTime(day.year, day.month, day.day);
+
+                          if (_isDaySelected(day) && selectedDate.isBefore(today)) {
                             return Padding(
 
                               padding: EdgeInsets.all(5),
@@ -247,7 +257,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                             );
                           }
                           // Apply custom text color for past days
-                          if (day.isBefore(DateTime.now())) {
+                          if (day.isBefore(today)) {
                             return Center(
                               child: Text(
                                 day.day.toString(),
@@ -265,10 +275,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                     : Container(),
 
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _totalDaysPerMonth > 0 ? _addOrUpdateHabit : null,
-                  child: Text(widget.initialHabit != null ? 'Update Habit' : 'Add Habit'),
+                Visibility(
+                  visible: widget.initialHabit == null,  // Button is only visible if initialHabit is null
+                  child: ElevatedButton(
+                    onPressed: _totalDaysPerMonth > 0 ? _addOrUpdateHabit : null,
+                    child: Text('Add Habit'),
+                  ),
                 ),
+
               ],
             ),
           ),
@@ -309,6 +323,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     // Strip the time component from the selected day
     DateTime dayWithoutTimezone = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
     int month = dayWithoutTimezone.month;
+    if(dayWithoutTimezone.year==DateTime.now().year||dayWithoutTimezone.month==DateTime.now().month||dayWithoutTimezone.day==DateTime.now().day){
+      print('Today is clicked');
+    }
     List<DateTime>? selectedDates = _selectedDatesPerMonth[month];
     _focusedDay = dayWithoutTimezone;
 
@@ -344,6 +361,9 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     }
     _calculateUnplannedDays();
     print('unplanned days after$_totalUnplannedDays');
+    if(widget.initialHabit != null){
+      _addOrUpdateHabit();
+    }
   }
 
 

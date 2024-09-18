@@ -74,11 +74,16 @@ class HabitsList extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => HabitDetailScreen(
-                      habitId: habit.id,
-                      habitName: habitName,
-                      habitDates: habit['plannedDays'],
-                      isDone: habit['isDone'],
+                    builder: (context) => AddHabitScreen(
+                      initialHabit: HabitDetails(
+                          id: habit.id,
+                          habitName: habit['habitName'],
+                          totalDays: habit['totalDaysPerMonth'],
+                          plannedDays: List<DateTime>.from(
+                              (habit['plannedDays'] as List)
+                                  .map((timestamp) => (timestamp as Timestamp).toDate())),
+                          startDate: (habit['startDate'] as Timestamp).toDate()
+                      ),
                     ),
                   ),
                 );
