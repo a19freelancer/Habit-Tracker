@@ -49,65 +49,65 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     }
   }
 
-  void _calculateUnplannedDays() {
-    DateTime currentMonthStart = DateTime(_focusedDay.year, _focusedDay.month, 1);
-    DateTime habitStartMonth = DateTime(_habitStartDate.year, _habitStartDate.month, 1);
+void _calculateUnplannedDays() {
+  DateTime currentMonthStart = DateTime(_focusedDay.year, _focusedDay.month, 1);
+  DateTime habitStartMonth = DateTime(_habitStartDate.year, _habitStartDate.month, 1);
 
-    // Calculate the number of complete months that have passed, including the current month
-    int monthsElapsed = (currentMonthStart.year - habitStartMonth.year) * 12 +
-        (currentMonthStart.month - habitStartMonth.month) + 1;
+  // Calculate the number of complete months that have passed, including the current month
+  int monthsElapsed = (currentMonthStart.year - habitStartMonth.year) * 12 +
+      (currentMonthStart.month - habitStartMonth.month) + 1;
 
-    // Total possible days up to and including the current month
-    int totalPossibleDays = monthsElapsed * _totalDaysPerMonth;
+  // Total possible days up to and including the current month
+  int totalPossibleDays = monthsElapsed * _totalDaysPerMonth;
 
-    // Calculate the total number of planned days so far, including the current month
-    int totalPlannedDays = 0;
-    _selectedDatesPerMonth.forEach((month, dates) {
-      totalPlannedDays += dates.length;
-    });
-
-
+  // Calculate the total number of planned days so far, including the current month
+  int totalPlannedDays = 0;
+  _selectedDatesPerMonth.forEach((month, dates) {
+    totalPlannedDays += dates.length;
+  });
 
 
-    // Calculate unplanned days
-    _totalUnplannedDays = totalPossibleDays - totalPlannedDays;
-
-    // Ensure that unplanned days don't drop below zero
-    if (_totalUnplannedDays < 0) {
-      _totalUnplannedDays = 0;
-    }
 
 
+  // Calculate unplanned days
+  _totalUnplannedDays = totalPossibleDays - totalPlannedDays;
+
+  // Ensure that unplanned days don't drop below zero
+  if (_totalUnplannedDays < 0) {
+    _totalUnplannedDays = 0;
   }
 
 
-  void _calculateUnplannedDays2() {
-    DateTime currentMonthStart = DateTime(_focusedDay.year, _focusedDay.month, 1);
-    DateTime habitStartMonth = DateTime(_habitStartDate.year, _habitStartDate.month, 1);
+}
 
-    // Calculate the number of complete months that have passed, excluding the current month
-    int monthsElapsed = (currentMonthStart.year - habitStartMonth.year) * 12 +
-        (currentMonthStart.month - habitStartMonth.month)+1;
 
-    // Total possible days up to the month before the current month
-    int totalPossibleDays = monthsElapsed * _initialDaysPerMonth;
+void _calculateUnplannedDays2() {
+  DateTime currentMonthStart = DateTime(_focusedDay.year, _focusedDay.month, 1);
+  DateTime habitStartMonth = DateTime(_habitStartDate.year, _habitStartDate.month, 1);
 
-    // Calculate the total number of planned days so far
-    int totalPlannedDays = 0;
-    _selectedDatesPerMonth.forEach((month, dates) {
+  // Calculate the number of complete months that have passed, excluding the current month
+  int monthsElapsed = (currentMonthStart.year - habitStartMonth.year) * 12 +
+      (currentMonthStart.month - habitStartMonth.month)+1;
 
-      totalPlannedDays += dates.length;
+  // Total possible days up to the month before the current month
+  int totalPossibleDays = monthsElapsed * _initialDaysPerMonth;
 
-    });
+  // Calculate the total number of planned days so far
+  int totalPlannedDays = 0;
+_selectedDatesPerMonth.forEach((month, dates) {
+  
+    totalPlannedDays += dates.length;
+  
+});
 
-    // Calculate unplanned days
-    _totalUnplannedDays = totalPossibleDays - totalPlannedDays;
+  // Calculate unplanned days
+  _totalUnplannedDays = totalPossibleDays - totalPlannedDays;
 
-    // Ensure that unplanned days don't drop below zero
-    if (_totalUnplannedDays < 0) {
-      _totalUnplannedDays = 0;
-    }
+  // Ensure that unplanned days don't drop below zero
+  if (_totalUnplannedDays < 0) {
+    _totalUnplannedDays = 0;
   }
+}
 
 
   @override
@@ -168,7 +168,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 ),
 
 
-                SizedBox(height: 20),
+                  SizedBox(height: 20),
                 Text(
                   'Select Dates',
                   style: TextStyle(fontSize: 18, color: _totalDaysPerMonth > 0 ? Colors.black : Colors.grey),
@@ -176,112 +176,112 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                 SizedBox(height: 10),
                 _totalDaysPerMonth > 0
                     ? Container(
-                    height: 400,
-                    child: TableCalendar(
-                      firstDay: _habitStartDate,
-                      lastDay: DateTime.now().add(Duration(days: 365)),
-                      focusedDay: _focusedDay,
-                      selectedDayPredicate: (day) {
-                        DateTime now = DateTime.now();
-                        DateTime today = DateTime(now.year, now.month, now.day);
-                        DateTime selectedDate = DateTime(day.year, day.month, day.day);
+                        height: 400,
+                        child: TableCalendar(
+                                firstDay: _habitStartDate,
+                                lastDay: DateTime.now().add(Duration(days: 365)),
+                                focusedDay: _focusedDay,
+                                selectedDayPredicate: (day) {
+                                  DateTime now = DateTime.now();
+                                  DateTime today = DateTime(now.year, now.month, now.day);
+                                  DateTime selectedDate = DateTime(day.year, day.month, day.day);
 
-                        return _isDaySelected(day) && (selectedDate.isAfter(today) || selectedDate == today);
-                      },
-                      enabledDayPredicate: (day) {
-                        // Allow all days to be "enabled"
-                        return true;
-                      },
-                      onDaySelected: (selectedDay, focusedDay) {
-                        DateTime now = DateTime.now();
-                        DateTime today = DateTime(now.year, now.month, now.day);
-                        if (!selectedDay.isBefore(today)) {
-                          setState(() {
-                            _focusedDay = focusedDay;
-                            _handleDaySelection(selectedDay);
-                          });
-                        }
-                        // If past day is selected, do nothing (read-only)
-                      },
-                      onPageChanged: (focusedDay) {
-                        setState(() {
-                          _focusedDay = focusedDay;
-                        });
-                      },
-                      calendarStyle: CalendarStyle(
-                        isTodayHighlighted: true,
-                        selectedDecoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        todayDecoration: BoxDecoration(
-                          color: Colors.orange,
-                          shape: BoxShape.circle,
-                        ),
-                        defaultDecoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                        ),
-                        selectedTextStyle: TextStyle(
-                          color: Colors.white,
-                        ),
-                        // Customize the text style for past days
-                        disabledTextStyle: TextStyle(
-                          color: Colors.grey, // Make past days look like they are disabled
-                        ),
-                      ),
-                      calendarBuilders: CalendarBuilders(
-                        defaultBuilder: (context, day, focusedDay) {
-                          // Apply custom decoration for past selected days
-                          DateTime now = DateTime.now();
-                          DateTime today = DateTime(now.year, now.month, now.day);
-                          DateTime selectedDate = DateTime(day.year, day.month, day.day);
-
-                          if (_isDaySelected(day) && selectedDate.isBefore(today)) {
-                            return Padding(
-
-                              padding: EdgeInsets.all(5),
-                              child: Container(
-
-                                decoration: BoxDecoration(
-                                  color: Colors.blueGrey.withOpacity(0.5), // Custom decoration for past selected days
-                                  shape: BoxShape.circle,
-
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    day.day.toString(),
-                                    style: TextStyle(color: Colors.white),
+                                  return _isDaySelected(day) && (selectedDate.isAfter(today) || selectedDate == today);
+                                },
+                                enabledDayPredicate: (day) {
+                                  // Allow all days to be "enabled"
+                                  return true;
+                                },
+                                onDaySelected: (selectedDay, focusedDay) {
+                                  DateTime now = DateTime.now();
+                                  DateTime today = DateTime(now.year, now.month, now.day);
+                                  if (!selectedDay.isBefore(today)) {
+                                    setState(() {
+                                      _focusedDay = focusedDay;
+                                      _handleDaySelection(selectedDay);
+                                    });
+                                  }
+                                  // If past day is selected, do nothing (read-only)
+                                },
+                                onPageChanged: (focusedDay) {
+                                  setState(() {
+                                    _focusedDay = focusedDay;
+                                  });
+                                },
+                                calendarStyle: CalendarStyle(
+                                  isTodayHighlighted: true,
+                                  selectedDecoration: BoxDecoration(
+                                    color: Colors.blue,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  todayDecoration: BoxDecoration(
+                                    color: Colors.orange,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  defaultDecoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                  ),
+                                  selectedTextStyle: TextStyle(
+                                    color: Colors.white,
+                                  ),
+                                  // Customize the text style for past days
+                                  disabledTextStyle: TextStyle(
+                                    color: Colors.grey, // Make past days look like they are disabled
                                   ),
                                 ),
-                              ),
-                            );
-                          }
-                          // Apply custom text color for past days
-                          if (day.isBefore(today)) {
-                            return Center(
-                              child: Text(
-                                day.day.toString(),
-                                style: TextStyle(color: Colors.grey), // Disabled color for past days
-                              ),
-                            );
-                          }
-                          return null; // Use default decoration for other days
-                        },
-                      ),
-                    )
+                                calendarBuilders: CalendarBuilders(
+                                  defaultBuilder: (context, day, focusedDay) {
+                                    // Apply custom decoration for past selected days
+                                    DateTime now = DateTime.now();
+                                    DateTime today = DateTime(now.year, now.month, now.day);
+                                    DateTime selectedDate = DateTime(day.year, day.month, day.day);
+
+                                    if (_isDaySelected(day) && selectedDate.isBefore(today)) {
+                                      return Padding(
+                                        
+                                        padding: EdgeInsets.all(5),
+                                        child: Container(
+                                      
+                                          decoration: BoxDecoration(
+                                            color: Colors.blueGrey.withOpacity(0.5), // Custom decoration for past selected days
+                                            shape: BoxShape.circle,
+                                            
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              day.day.toString(),
+                                              style: TextStyle(color: Colors.white),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    // Apply custom text color for past days
+                                    if (day.isBefore(today)) {
+                                      return Center(
+                                        child: Text(
+                                          day.day.toString(),
+                                          style: TextStyle(color: Colors.grey), // Disabled color for past days
+                                        ),
+                                      );
+                                    }
+                                    return null; // Use default decoration for other days
+                                  },
+                                ),
+                              )
 
 
-                )
+                      )
                     : Container(),
-
+              
                 SizedBox(height: 20),
                 Visibility(
-                  visible: widget.initialHabit == null,  // Button is only visible if initialHabit is null
-                  child: ElevatedButton(
-                    onPressed: _totalDaysPerMonth > 0 ? _addOrUpdateHabit : null,
-                    child: Text('Add Habit'),
-                  ),
+                visible: widget.initialHabit == null,  // Button is only visible if initialHabit is null
+                child: ElevatedButton(
+                  onPressed: _totalDaysPerMonth > 0 ? _addOrUpdateHabit : null,
+                  child: Text('Add Habit'),
                 ),
+              ),
 
               ],
             ),
@@ -292,79 +292,79 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   }
 
   bool isSameDate(DateTime date1, DateTime date2) {
-    return date1.year == date2.year &&
-        date1.month == date2.month &&
-        date1.day == date2.day;
+  return date1.year == date2.year &&
+         date1.month == date2.month &&
+         date1.day == date2.day;
+}
+ bool _isDaySelected(DateTime day) {
+  
+  DateTime dayWithoutTimezone = DateTime(day.year, day.month, day.day);
+  int month = dayWithoutTimezone.month;
+  List<DateTime>? selectedDates = _selectedDatesPerMonth[month];
+  bool  isSelected=false;
+ if(selectedDates!=null){
+   isSelected = selectedDates.any((selectedDate) => isSameDate(selectedDate, day));_selectedDatesPerMonth[month]?.contains(dayWithoutTimezone) ?? false;
   }
-  bool _isDaySelected(DateTime day) {
-
-    DateTime dayWithoutTimezone = DateTime(day.year, day.month, day.day);
-    int month = dayWithoutTimezone.month;
-    List<DateTime>? selectedDates = _selectedDatesPerMonth[month];
-    bool  isSelected=false;
-    if(selectedDates!=null){
-      isSelected = selectedDates.any((selectedDate) => isSameDate(selectedDate, day));_selectedDatesPerMonth[month]?.contains(dayWithoutTimezone) ?? false;
-    }
-    // If the day is selected, print the date
-    print('Day: $dayWithoutTimezone');
-    print('Month: $month');
-    print(_selectedDatesPerMonth);
-    print(widget.initialHabit?.plannedDays);
-    if (isSelected) {
-      print("Selected Date: ${day.toString()}");
-    }
-
-    return isSelected;
+  // If the day is selected, print the date
+  print('Day: $dayWithoutTimezone');
+  print('Month: $month');
+  print(_selectedDatesPerMonth);
+  print(widget.initialHabit?.plannedDays);
+  if (isSelected) {
+    print("Selected Date: ${day.toString()}");
   }
+
+  return isSelected;
+}
 
 
   void _handleDaySelection(DateTime selectedDay) {
     print('unplanned days before $_totalUnplannedDays');
-    // Strip the time component from the selected day
-    DateTime dayWithoutTimezone = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
-    int month = dayWithoutTimezone.month;
-    if(dayWithoutTimezone.year==DateTime.now().year||dayWithoutTimezone.month==DateTime.now().month||dayWithoutTimezone.day==DateTime.now().day){
-      print('Today is clicked');
-    }
-    List<DateTime>? selectedDates = _selectedDatesPerMonth[month];
-    _focusedDay = dayWithoutTimezone;
+  // Strip the time component from the selected day
+  DateTime dayWithoutTimezone = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+  int month = dayWithoutTimezone.month;
+  if(dayWithoutTimezone.year==DateTime.now().year||dayWithoutTimezone.month==DateTime.now().month||dayWithoutTimezone.day==DateTime.now().day){
+    print('Today is clicked');
+  }
+  List<DateTime>? selectedDates = _selectedDatesPerMonth[month];
+  _focusedDay = dayWithoutTimezone;
 
-    // Initialize the month list if not already initialized
-    if (!_selectedDatesPerMonth.containsKey(month)) {
-      _selectedDatesPerMonth[month] = [];
-    }
+  // Initialize the month list if not already initialized
+  if (!_selectedDatesPerMonth.containsKey(month)) {
+    _selectedDatesPerMonth[month] = [];
+  }
 
-    _calculateUnplannedDays();
-    List<DateTime> selectedDaysForMonth = _selectedDatesPerMonth[month]!;
+  _calculateUnplannedDays();
+  List<DateTime> selectedDaysForMonth = _selectedDatesPerMonth[month]!;
+ 
+  int availableDaysForMonth = _totalDaysPerMonth + _totalUnplannedDays;
 
-    int availableDaysForMonth = _totalDaysPerMonth + _totalUnplannedDays;
+  // Check if the day is already selected by comparing only the date (not time)
+  bool isAlreadySelected = selectedDaysForMonth.any(
+      (selectedDate) => selectedDate.year == dayWithoutTimezone.year && selectedDate.month == dayWithoutTimezone.month && selectedDate.day == dayWithoutTimezone.day);
 
-    // Check if the day is already selected by comparing only the date (not time)
-    bool isAlreadySelected = selectedDaysForMonth.any(
-            (selectedDate) => selectedDate.year == dayWithoutTimezone.year && selectedDate.month == dayWithoutTimezone.month && selectedDate.day == dayWithoutTimezone.day);
-
-    if (isAlreadySelected) {
-      // Unselect the day if already selected
-      selectedDaysForMonth.removeWhere(
-            (selectedDate) => selectedDate.year == dayWithoutTimezone.year && selectedDate.month == dayWithoutTimezone.month && selectedDate.day == dayWithoutTimezone.day,
-      );
-
+  if (isAlreadySelected) {
+    // Unselect the day if already selected
+    selectedDaysForMonth.removeWhere(
+      (selectedDate) => selectedDate.year == dayWithoutTimezone.year && selectedDate.month == dayWithoutTimezone.month && selectedDate.day == dayWithoutTimezone.day,
+    );
+    
+  } else {
+    // Add the day if it's not already selected and within the limit
+    if (selectedDaysForMonth.length < availableDaysForMonth) {
+      selectedDaysForMonth.add(dayWithoutTimezone);
     } else {
-      // Add the day if it's not already selected and within the limit
-      if (selectedDaysForMonth.length < availableDaysForMonth) {
-        selectedDaysForMonth.add(dayWithoutTimezone);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('You can only select $availableDaysForMonth days this month')),
-        );
-      }
-    }
-    _calculateUnplannedDays();
-    print('unplanned days after$_totalUnplannedDays');
-    if(widget.initialHabit != null){
-      _addOrUpdateHabit();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You can only select $availableDaysForMonth days this month')),
+      );
     }
   }
+  _calculateUnplannedDays();
+  print('unplanned days after$_totalUnplannedDays');
+  if(widget.initialHabit != null){
+    _addOrUpdateHabit2();
+  }
+}
 
 
   String _getSelectedDatesFormatted() {
@@ -412,7 +412,43 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
       }
     }
   }
+    Future<void> _addOrUpdateHabit2() async {
+    if (_formKey.currentState!.validate()) {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        String habitName = _habitNameController.text;
+
+        List<Timestamp> plannedDays = _selectedDatesPerMonth.values
+            .expand((dates) => dates)
+            .map((date) => Timestamp.fromDate(date))
+            .toList();
+        _calculateUnplannedDays();
+        if (_habitId != null) {
+          await FirebaseFirestore.instance.collection('habits').doc(_habitId).set({
+            'habitName': habitName,
+            'totalDaysPerMonth': _totalDaysPerMonth,
+            'plannedDays': plannedDays,
+            'userEmail': user.email,
+            'isDone': false,
+            'startDate': _habitStartDate,
+            'unplannedDays':_totalUnplannedDays
+          }, SetOptions(merge: true));
+        } else {
+          await FirebaseFirestore.instance.collection('habits').add({
+            'habitName': habitName,
+            'totalDaysPerMonth': _totalDaysPerMonth,
+            'plannedDays': plannedDays,
+            'userEmail': user.email,
+            'isDone': false,
+            'startDate': _habitStartDate,
+            'unplannedDays':_totalUnplannedDays
+          });
+        }
+      }
+    }
+  }
 }
+
 
 class HabitDetails {
   final String id;
