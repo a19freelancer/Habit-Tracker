@@ -178,97 +178,101 @@ _selectedDatesPerMonth.forEach((month, dates) {
                     ? Container(
                         height: 400,
                         child: TableCalendar(
-                                firstDay: _habitStartDate,
-                                lastDay: DateTime.now().add(Duration(days: 365)),
-                                focusedDay: _focusedDay,
-                                selectedDayPredicate: (day) {
+                              firstDay: _habitStartDate,
+                              lastDay: DateTime.now().add(Duration(days: 365)),
+                              focusedDay: _focusedDay,
+                              selectedDayPredicate: (day) {
+                                DateTime now = DateTime.now();
+                                DateTime today = DateTime(now.year, now.month, now.day);
+                                DateTime selectedDate = DateTime(day.year, day.month, day.day);
+
+                                return _isDaySelected(day) && (selectedDate.isAfter(today) || selectedDate == today);
+                              },
+                              enabledDayPredicate: (day) {
+                                return true; // Allow all days to be "enabled"
+                              },
+                              onDaySelected: (selectedDay, focusedDay) {
+                                DateTime now = DateTime.now();
+                                DateTime today = DateTime(now.year, now.month, now.day);
+                                if (!selectedDay.isBefore(today)) {
+                                  setState(() {
+                                    _focusedDay = focusedDay;
+                                    _handleDaySelection(selectedDay);
+                                  });
+                                }
+                                // If past day is selected, do nothing (read-only)
+                              },
+                              onPageChanged: (focusedDay) {
+                                setState(() {
+                                  _focusedDay = focusedDay;
+                                });
+                              },
+                              calendarStyle: CalendarStyle(
+                                isTodayHighlighted: true,
+                                selectedDecoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                ),
+                                todayDecoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  shape: BoxShape.circle,
+                                ),
+                                defaultDecoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                ),
+                                selectedTextStyle: TextStyle(
+                                  color: Colors.white,
+                                ),
+                                disabledTextStyle: TextStyle(
+                                  color: Colors.grey, // Make past days look like they are disabled
+                                ),
+                              ),
+                              calendarBuilders: CalendarBuilders(
+                                defaultBuilder: (context, day, focusedDay) {
                                   DateTime now = DateTime.now();
                                   DateTime today = DateTime(now.year, now.month, now.day);
                                   DateTime selectedDate = DateTime(day.year, day.month, day.day);
 
-                                  return _isDaySelected(day) && (selectedDate.isAfter(today) || selectedDate == today);
-                                },
-                                enabledDayPredicate: (day) {
-                                  // Allow all days to be "enabled"
-                                  return true;
-                                },
-                                onDaySelected: (selectedDay, focusedDay) {
-                                  DateTime now = DateTime.now();
-                                  DateTime today = DateTime(now.year, now.month, now.day);
-                                  if (!selectedDay.isBefore(today)) {
-                                    setState(() {
-                                      _focusedDay = focusedDay;
-                                      _handleDaySelection(selectedDay);
-                                    });
+                                  if (_isDaySelected(day) && selectedDate.isBefore(today)) {
+                                    return Padding(
+                                      padding: EdgeInsets.all(5),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.blueGrey.withOpacity(0.5), // Custom decoration for past selected days
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            day.day.toString(),
+                                            style: TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
+                                    );
                                   }
-                                  // If past day is selected, do nothing (read-only)
+                                  // Apply custom text color for past days
+                                  if (day.isBefore(today)) {
+                                    return Center(
+                                      child: Text(
+                                        day.day.toString(),
+                                        style: TextStyle(color: Colors.grey), // Disabled color for past days
+                                      ),
+                                    );
+                                  }
+                                  return null; // Use default decoration for other days
                                 },
-                                onPageChanged: (focusedDay) {
-                                  setState(() {
-                                    _focusedDay = focusedDay;
-                                  });
-                                },
-                                calendarStyle: CalendarStyle(
-                                  isTodayHighlighted: true,
-                                  selectedDecoration: BoxDecoration(
-                                    color: Colors.blue,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  todayDecoration: BoxDecoration(
-                                    color: Colors.orange,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  defaultDecoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                  ),
-                                  selectedTextStyle: TextStyle(
-                                    color: Colors.white,
-                                  ),
-                                  // Customize the text style for past days
-                                  disabledTextStyle: TextStyle(
-                                    color: Colors.grey, // Make past days look like they are disabled
-                                  ),
-                                ),
-                                calendarBuilders: CalendarBuilders(
-                                  defaultBuilder: (context, day, focusedDay) {
-                                    // Apply custom decoration for past selected days
-                                    DateTime now = DateTime.now();
-                                    DateTime today = DateTime(now.year, now.month, now.day);
-                                    DateTime selectedDate = DateTime(day.year, day.month, day.day);
+                              ),
+                              headerStyle: HeaderStyle(
+                                titleCentered: true, // Centers the header title
+                                formatButtonVisible: false, // Hides the "2 weeks" button
+                                leftChevronIcon: Icon(Icons.chevron_left), // Customize left button icon
+                                rightChevronIcon: Icon(Icons.chevron_right), // Customize right button icon
+                                leftChevronPadding: EdgeInsets.only(right: 8.0), // Space between left button and title
+                                rightChevronPadding: EdgeInsets.only(left: 8.0), // Space between right button and title
+                              ),
+                            )
 
-                                    if (_isDaySelected(day) && selectedDate.isBefore(today)) {
-                                      return Padding(
-                                        
-                                        padding: EdgeInsets.all(5),
-                                        child: Container(
-                                      
-                                          decoration: BoxDecoration(
-                                            color: Colors.blueGrey.withOpacity(0.5), // Custom decoration for past selected days
-                                            shape: BoxShape.circle,
-                                            
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              day.day.toString(),
-                                              style: TextStyle(color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                    // Apply custom text color for past days
-                                    if (day.isBefore(today)) {
-                                      return Center(
-                                        child: Text(
-                                          day.day.toString(),
-                                          style: TextStyle(color: Colors.grey), // Disabled color for past days
-                                        ),
-                                      );
-                                    }
-                                    return null; // Use default decoration for other days
-                                  },
-                                ),
-                              )
+
 
 
                       )
