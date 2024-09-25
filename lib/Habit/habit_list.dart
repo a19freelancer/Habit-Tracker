@@ -71,22 +71,22 @@ class HabitsList extends StatelessWidget {
 
             return GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddHabitScreen(
-                      initialHabit: HabitDetails(
-                          id: habit.id,
-                          habitName: habit['habitName'],
-                          totalDays: habit['totalDaysPerMonth'],
-                          plannedDays: List<DateTime>.from(
-                              (habit['plannedDays'] as List)
-                                  .map((timestamp) => (timestamp as Timestamp).toDate())),
-                          startDate: (habit['startDate'] as Timestamp).toDate()
-                      ),
-                    ),
-                  ),
-                );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddHabitScreen(
+                                initialHabit: HabitDetails(
+                                  id: habit.id,
+                                  habitName: habit['habitName'],
+                                  totalDays: habit['totalDaysPerMonth'],
+                                  plannedDays: List<DateTime>.from(
+                                        (habit['plannedDays'] as List)
+                                            .map((timestamp) => (timestamp as Timestamp).toDate())),
+                                  startDate: (habit['startDate'] as Timestamp).toDate()
+                                ),
+                              ),
+                            ),
+                          );
               },
               child: Container(
                 margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
@@ -121,25 +121,10 @@ class HabitsList extends StatelessWidget {
                             color: Colors.white,
                           ),
                         ),
-                        IconButton(
-                          icon: Icon(Icons.edit, color: Colors.green),
+                       IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddHabitScreen(
-                                  initialHabit: HabitDetails(
-                                      id: habit.id,
-                                      habitName: habit['habitName'],
-                                      totalDays: habit['totalDaysPerMonth'],
-                                      plannedDays: List<DateTime>.from(
-                                          (habit['plannedDays'] as List)
-                                              .map((timestamp) => (timestamp as Timestamp).toDate())),
-                                      startDate: (habit['startDate'] as Timestamp).toDate()
-                                  ),
-                                ),
-                              ),
-                            );
+                            _showDeleteConfirmationDialog(context, habit.id);
                           },
                         ),
                       ],
@@ -180,17 +165,7 @@ class HabitsList extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            _showDeleteConfirmationDialog(context, habit.id);
-                          },
-                        ),
-                      ],
-                    ),
+                    
                   ],
                 ),
               ),
@@ -230,13 +205,13 @@ class HabitsList extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => AddHabitScreen(
                       initialHabit: HabitDetails(
-                          id: habit.id,
-                          habitName: habit['habitName'],
-                          totalDays: habit['totalDaysPerMonth'],
-                          plannedDays: List<DateTime>.from(
+                        id: habit.id,
+                        habitName: habit['habitName'],
+                        totalDays: habit['totalDaysPerMonth'],
+                        plannedDays: List<DateTime>.from(
                               (habit['plannedDays'] as List)
                                   .map((timestamp) => (timestamp as Timestamp).toDate())),
-                          startDate: (habit['startDate'] as Timestamp).toDate()
+                        startDate: (habit['startDate'] as Timestamp).toDate()
                       ),
                     ),
                   ),
