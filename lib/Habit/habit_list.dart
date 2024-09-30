@@ -15,14 +15,7 @@ class MyHabitsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Your Habits', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blue,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              // Navigate to settings screen if needed
-            },
-          ),
-        ],
+       
       ),
       body: HabitsList(userEmail: userEmail),
     );
