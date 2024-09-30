@@ -19,28 +19,7 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: Text('Habits For Current Month', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        // actions: [
-        //   PopupMenuButton<String>(
-        //     onSelected: (value) {
-        //       if (value == 'todayHabits') {
-        //         Navigator.push(
-        //           context,
-        //           MaterialPageRoute(builder: (context) => TodayHabitsScreen()),
-        //         );
-        //       }
-        //     },
-        //     itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        //       const PopupMenuItem<String>(
-        //         value: 'todayHabits',
-        //         child: ListTile(
-        //           leading: Icon(Icons.today),
-        //           title: Text('Habits'),
-        //         ),
-        //       ),
-        //     ],
-        //   ),
-        // ],
+        title: Text('Habits For Current Month', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       ),
       body: Column(
         children: [
@@ -58,7 +37,7 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(child: TodayHabitsList()), // Update to use TodayHabitsList
+          Expanded(child: HabitsGroupedByDay()), // Updated to use grouped habits
         ],
       ),
       floatingActionButton: SpeedDial(
@@ -81,7 +60,7 @@ class HomeScreen extends StatelessWidget {
           SpeedDialChild(
             child: Icon(Icons.settings),
             backgroundColor: Colors.blue,
-            label: 'Settings',
+            label: 'Manage Habits',
             labelBackgroundColor: Colors.blue,
             onTap: () {
               Get.to(MyHabitsScreen());
@@ -95,111 +74,118 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-
-
-class TodayHabitsList extends StatefulWidget {
+class HabitsGroupedByDay extends StatefulWidget {
   @override
-  _TodayHabitsListState createState() => _TodayHabitsListState();
+  _HabitsGroupedByDayState createState() => _HabitsGroupedByDayState();
 }
 
-class _TodayHabitsListState extends State<TodayHabitsList> {
+class _HabitsGroupedByDayState extends State<HabitsGroupedByDay> {
   final String userEmail = FirebaseAuth.instance.currentUser!.email!;
   final DateTime now = DateTime.now();
-  String selectedFilter = 'Today';
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Filter Dropdown
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // Text('Filter: ', style: TextStyle(fontSize: 16)),
-              DropdownButton<String>(
-                value: selectedFilter,
-                items: <String>['Today', 'This Week', 'This Month'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    selectedFilter = newValue!;
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('habits')
-                .where('userEmail', isEqualTo: userEmail)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('habits')
+          .where('userEmail', isEqualTo: userEmail)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('😊 You have no habits.', style: TextStyle(fontSize: 18, color: Colors.grey)));
+        }
+
+        // Convert habit dates into distinct dates (removing duplicates)
+        List<Map<String, dynamic>> habits = snapshot.data!.docs.map((habit) {
+          final List<dynamic> habitDates = habit['plannedDays'];
+          return {
+            'habitName': habit['habitName'],
+            'habitId': habit.id,
+            'habitDates': habitDates
+                .map((timestamp) => (timestamp as Timestamp).toDate())
+                .toSet()
+                .toList(),
+            'isDone': habit['isDone'] == 'completed',
+          };
+        }).toList();
+
+        // Filter habits for today and future
+        final currentAndFutureHabits = habits.where((habit) {
+          return (habit['habitDates'] as List<DateTime>).any((date) {
+            return date.isAfter(now) || (date.day == now.day && date.month == now.month && date.year == now.year);
+          });
+        }).toList();
+
+        // Group habits by date
+        Map<DateTime, List<Map<String, dynamic>>> groupedHabits = {};
+
+        for (var habit in currentAndFutureHabits) {
+          final List<DateTime> habitDates = habit['habitDates'] as List<DateTime>;
+          for (var date in habitDates) {
+            if (date.isAfter(now) || (date.day == now.day && date.month == now.month && date.year == now.year)) {
+              final key = DateTime(date.year, date.month, date.day); // Only keep date, no time
+              if (groupedHabits.containsKey(key)) {
+                groupedHabits[key]!.add(habit);
+              } else {
+                groupedHabits[key] = [habit];
               }
+            }
+          }
+        }
 
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return Center(child: Text('😊 You have no habits.', style: TextStyle(fontSize: 18, color: Colors.grey)));
-              }
+        // Sort the grouped dates: today first, then future dates in ascending order
+        final today = DateTime(now.year, now.month, now.day);
+        final sortedDates = groupedHabits.keys.toList()
+          ..sort((a, b) {
+            if (a == today) return -1; // today comes first
+            if (b == today) return 1;
+            return a.compareTo(b); // sort future dates in ascending order
+          });
 
-              final habits = snapshot.data!.docs.where((habit) {
-                final List<dynamic> habitDates = habit['plannedDays'];
-                return habitDates.any((timestamp) {
-                  final date = (timestamp as Timestamp).toDate();
-                  if (selectedFilter == 'Today') {
-                    return date.day == now.day && date.month == now.month && date.year == now.year;
-                  } else if (selectedFilter == 'This Week') {
-                    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-                    final endOfWeek = startOfWeek.add(Duration(days: 6));
-                    return date.isAfter(startOfWeek) && date.isBefore(endOfWeek.add(Duration(days: 1)));
-                  } else if (selectedFilter == 'This Month') {
-                    return date.month == now.month && date.year == now.year;
-                  }
-                  return false;
-                });
-              }).toList();
+        return ListView.builder(
+          itemCount: sortedDates.length,
+          itemBuilder: (context, index) {
+            final date = sortedDates[index];
+            final habitsForDate = groupedHabits[date]!;
 
-              if (habits.isEmpty) {
-                return Center(
-                  child: Text(
-                    'Congrats buddy, you do not have any habit for $selectedFilter!',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+            final formattedDate = DateFormat('EEEE, MMM d').format(date);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Date Header - Smaller, same width as habits, and aligned
+                Container(
+                  margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                  padding: EdgeInsets.symmetric(vertical: 5),
+                  width: double.infinity,  // Full width for both date and habits
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                );
-              }
+                  child: Center(
+                    child: Text(
+                      formattedDate,
+                      style: TextStyle(
+                        fontSize: 16, // Smaller font size
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ),
+                ),
+                // List of Habits for this Date
+                Column(
+                  children: habitsForDate.map((habit) {
+                    final habitName = habit['habitName'];
+                    final bool isDone = habit['isDone'];
 
-              return ListView.builder(
-                itemCount: habits.length,
-                itemBuilder: (context, index) {
-                  final habit = habits[index];
-                  final habitName = habit['habitName'];
-                  final bool isDone = habit['isDone'] == 'completed'; // Adjust the isDone value
-
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HabitDetailScreen(
-                            habitId: habit.id,
-                            habitName: habitName,
-                            habitDates: habit['plannedDays'],
-                            isDone: isDone,
-                          ),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                      padding: EdgeInsets.all(20),
+                    return Container(
+                      margin: EdgeInsets.symmetric(vertical: 5, horizontal: 20),
+                      padding: EdgeInsets.all(15),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [Colors.blue.shade200, Colors.blue.shade600],
@@ -207,18 +193,10 @@ class _TodayHabitsListState extends State<TodayHabitsList> {
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.5),
-                            spreadRadius: 5,
-                            blurRadius: 7,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle, color: Colors.white, size: 30),
+                          Icon(isDone ? Icons.check_circle : Icons.radio_button_unchecked, color: Colors.white, size: 30),
                           SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -228,16 +206,14 @@ class _TodayHabitsListState extends State<TodayHabitsList> {
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
+                    );
+                  }).toList(),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
-
-
