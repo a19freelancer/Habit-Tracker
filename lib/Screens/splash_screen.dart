@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:habit_tracker/Authentication/login_page.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -25,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
 
     Future.delayed(Duration(seconds: 5), () {
-      Get.offNamed('/login');
+      Get.offNamed('/home');
     });
   }
 
@@ -50,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ),
             SizedBox(height: 20),
             Text(
-              'Habit Tracker',
+              'Treat Budget',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
