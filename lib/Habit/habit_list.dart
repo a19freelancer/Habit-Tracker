@@ -1,167 +1,108 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
+import '../DataBaseHelper/habit.dart';
 import 'habit_details.dart';
-import 'add_habit.dart'; // Import the AddHabitScreen
+import 'add_habit.dart';
 
 class MyHabitsScreen extends StatelessWidget {
-  final String userEmail = FirebaseAuth.instance.currentUser!.email!;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Your Habits', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.blue,
-       
+        title: const Text('Your Habits',
+            style: TextStyle(
+                fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: 1.1)),
+        backgroundColor: Colors.blue.shade800,
+        elevation: 4,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
-      body: HabitsList(userEmail: userEmail),
+      body: HabitsList(),
     );
   }
 }
 
-class HabitsList extends StatelessWidget {
-  final String userEmail;
+class HabitsList extends StatefulWidget {
+  @override
+  State<HabitsList> createState() => _HabitsListState();
+}
 
-  HabitsList({required this.userEmail});
+class _HabitsListState extends State<HabitsList> {
+  late Future<List<Map<String, dynamic>>> _habitsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchHabits();
+  }
+
+  void _fetchHabits() {
+    setState(() {
+      _habitsFuture = DBHelper().getHabitsByUser();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('habits')
-          .where('userEmail', isEqualTo: userEmail)
-          .snapshots(),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _habitsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
-              child: Text('😊 You have no habits.',
-                  style: TextStyle(fontSize: 18, color: Colors.grey)));
+              child: CircularProgressIndicator(
+            color: Colors.blue.shade800,
+          ));
         }
 
-        final habits = snapshot.data!.docs;
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.emoji_emotions_outlined,
+                    size: 60, color: Colors.grey.shade400),
+                SizedBox(height: 16),
+                Text('No habits found',
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500)),
+                Text('Tap + to create new habits',
+                    style:
+                        TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+              ],
+            ),
+          );
+        }
 
-        return ListView.builder(
+        final habits = snapshot.data!;
+
+        return ListView.separated(
+          padding: EdgeInsets.all(16),
           itemCount: habits.length,
+          separatorBuilder: (context, index) => SizedBox(height: 12),
           itemBuilder: (context, index) {
             final habit = habits[index];
             final habitName = habit['habitName'];
             final totalDays = habit['totalDaysPerMonth'];
-            final plannedDaysList = habit['plannedDays'] as List;
-            final plannedDays = plannedDaysList.isEmpty ? 0 : plannedDaysList.length;
+            final plannedDaysList = habit['plannedDays'] != null
+                ? habit['plannedDays'].split(',')
+                : [];
+            final plannedDays =
+                plannedDaysList.isEmpty ? 0 : plannedDaysList.length;
             final unplannedDays = habit['unplannedDays'];
 
-            // Get the month name for the habit if plannedDays is not empty
             final String monthName = plannedDaysList.isNotEmpty
-                ? DateFormat('MMMM').format((plannedDaysList[0] as Timestamp).toDate())
+                ? DateFormat('MMMM').format(DateTime.parse(plannedDaysList[0]))
                 : 'Unplanned';
 
-            return GestureDetector(
-              onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddHabitScreen(
-                                initialHabit: HabitDetails(
-                                  id: habit.id,
-                                  habitName: habit['habitName'],
-                                  totalDays: habit['totalDaysPerMonth'],
-                                  plannedDays: List<DateTime>.from(
-                                        (habit['plannedDays'] as List)
-                                            .map((timestamp) => (timestamp as Timestamp).toDate())),
-                                  startDate: (habit['startDate'] as Timestamp).toDate()
-                                ),
-                              ),
-                            ),
-                          );
-              },
-              child: Container(
-                margin: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade200, Colors.blue.shade600],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 5,
-                      blurRadius: 7,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$habitName',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                       IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            _showDeleteConfirmationDialog(context, habit.id);
-                          },
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.calendar_today, color: Colors.white),
-                        SizedBox(width: 5),
-                        Text(
-                          'Days per Month: $totalDays',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white),
-                        SizedBox(width: 5),
-                        Text(
-                          plannedDays == 0
-                              ? 'No Planned Days Set'
-                              : 'Total Planned Days: $plannedDays',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(Icons.cancel, color: Colors.white),
-                        SizedBox(width: 5),
-                        Text(
-                          'Unplanned Days: $unplannedDays',
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    
-                  ],
-                ),
-              ),
+            return _buildHabitCard(
+              context,
+              habit: habit,
+              habitName: habitName,
+              totalDays: totalDays,
+              plannedDays: plannedDays,
+              unplannedDays: unplannedDays,
+              monthName: monthName,
             );
           },
         );
@@ -169,85 +110,174 @@ class HabitsList extends StatelessWidget {
     );
   }
 
-  void _showReplanConfirmationDialog(BuildContext context, DocumentSnapshot habit) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Replan'),
-          content: Text('Are you sure you want to replan this habit?'),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: Colors.blue),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+  Widget _buildHabitCard(
+    BuildContext context, {
+    required Map<String, dynamic> habit,
+    required String habitName,
+    required int totalDays,
+    required int plannedDays,
+    required int unplannedDays,
+    required String monthName,
+  }) {
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: ListTile(
+          onTap: () => _navigateToEditScreen(context, habit),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          leading: Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              shape: BoxShape.circle,
             ),
-            TextButton(
-              child: Text(
-                'Replan',
-                style: TextStyle(color: Colors.green),
+            child: Icon(Icons.assignment_outlined,
+                color: Colors.blue.shade800, size: 28),
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(habitName,
+                    style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade800)),
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddHabitScreen(
-                      initialHabit: HabitDetails(
-                        id: habit.id,
-                        habitName: habit['habitName'],
-                        totalDays: habit['totalDaysPerMonth'],
-                        plannedDays: List<DateTime>.from(
-                              (habit['plannedDays'] as List)
-                                  .map((timestamp) => (timestamp as Timestamp).toDate())),
-                        startDate: (habit['startDate'] as Timestamp).toDate()
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        );
-      },
+              IconButton(
+                icon: Icon(Icons.delete_outline, color: Colors.grey.shade500),
+                onPressed: () =>
+                    _showDeleteConfirmationDialog(context, habit['id']),
+              ),
+            ],
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 8),
+              _buildStatRow(
+                icon: Icons.calendar_month_outlined,
+                primaryText: '$totalDays days/month',
+                secondaryText: 'Target',
+              ),
+              SizedBox(height: 4),
+              _buildStatRow(
+                icon: Icons.check_circle_outline,
+                primaryText: '$plannedDays planned',
+                secondaryText: 'Completed',
+                color: Colors.green.shade600,
+              ),
+              SizedBox(height: 4),
+              _buildStatRow(
+                icon: Icons.warning_amber_outlined,
+                primaryText: '$unplannedDays unplanned',
+                secondaryText: 'Missed',
+                color: Colors.orange.shade600,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, String habitId) {
+  Widget _buildStatRow({
+    required IconData icon,
+    required String primaryText,
+    required String secondaryText,
+    Color color = Colors.grey,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(primaryText,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w500)),
+            Text(secondaryText,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+          ],
+        )
+      ],
+    );
+  }
+
+  void _navigateToEditScreen(BuildContext context, Map<String, dynamic> habit) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddHabitScreen(
+          initialHabit: HabitDetails(
+            id: habit['id'].toString(),
+            habitName: habit['habitName'],
+            totalDays: habit['totalDaysPerMonth'],
+            plannedDays: (habit['plannedDays']?.split(',') ?? [])
+                .map<DateTime>((date) => DateTime.parse(date))
+                .toList(),
+            startDate: DateTime.parse(habit['startDate']),
+          ),
+        ),
+      ),
+    ).then((_) => _fetchHabits());
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, int habitId) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Deletion'),
-          content: Text('Are you sure you want to delete this habit?'),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: Colors.blue),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.delete_forever_outlined,
+                    size: 40, color: Colors.red.shade400),
+                SizedBox(height: 16),
+                Text('Delete Habit?',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                SizedBox(height: 8),
+                Text('This action cannot be undone',
+                    style: TextStyle(color: Colors.grey.shade600)),
+                SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      child: Text('Cancel',
+                          style: TextStyle(color: Colors.grey.shade700)),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade50,
+                        foregroundColor: Colors.red.shade700,
+                      ),
+                      child: Text('Delete'),
+                      onPressed: () async {
+                        await DBHelper().deleteHabit(habitId);
+                        Navigator.of(context).pop();
+                        _fetchHabits();
+                      },
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextButton(
-              child: Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-              onPressed: () async {
-                await FirebaseFirestore.instance
-                    .collection('habits')
-                    .doc(habitId)
-                    .delete();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+          ),
         );
       },
     );

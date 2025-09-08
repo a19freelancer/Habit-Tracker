@@ -1,111 +1,113 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:habit_tracker/Screens/contact_us.dart';
-
-import '../Profile/edit_profile.dart';
 import 'about_app_screen.dart';
+
 class SideDrawer extends StatelessWidget {
-  void _showLogoutConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Logout'),
-          content: Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Logout'),
-              onPressed: () async {
-                await FirebaseAuth.instance.signOut();
-                Navigator.of(context).pop();
-                Navigator.of(context).pushReplacementNamed('/login');
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
   @override
   Widget build(BuildContext context) {
-    User? user = FirebaseAuth.instance.currentUser;
-
-    return  Drawer(
+    return Drawer(
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: AssetImage('images/avatar.png'), // Replace with your placeholder image asset path
-          ),
-          SizedBox(height: 16),
-          Text(
-            user?.displayName ?? 'User Name',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            user?.email ?? 'user@example.com',
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-          ),
-          SizedBox(height: 24),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.info),
-            title: Text('About App'),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => AboutAppScreen()),
-              );
-            },
-          ),
-          Divider(),
-          // ListTile(
-          //   leading: Icon(Icons.update),
-          //   title: Text('Update'),
-          //   onTap: () {
-          //     // Navigate to Update screen
-          //   },
-          // ),
-          // Divider(),
-          ListTile(
-            leading: Icon(Icons.person),
-            title: Text('Profile'),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => EditProfileScreen()),
-              );
-            },
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.perm_contact_cal_rounded),
-            title: Text('Contact Us'),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => ContactUsScreen()),
-              );
-            },
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.logout),
-            title: Text(
-              'Logout',
-              style: TextStyle(color: Colors.red),
+          // Drawer Header
+          Container(
+            height: 150,
+            decoration: BoxDecoration(
+              color: Colors.blue.shade800,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              ),
             ),
-            onTap: () => _showLogoutConfirmationDialog(context),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.task_alt_rounded, size: 48, color: Colors.white),
+                  SizedBox(height: 12),
+                  Text(
+                    'Treat Budget',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          Divider(),
+
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.only(top: 24, left: 16, right: 16),
+              children: [
+                _buildListTile(context,
+                    icon: Icons.info_outline_rounded,
+                    title: 'About App',
+                    onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AboutAppScreen()),
+                        )),
+                SizedBox(height: 12),
+                _buildListTile(
+                  context,
+                  icon: Icons.contact_support_outlined,
+                  title: 'Contact Us',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ContactUsScreen()),
+                  ),
+                )
+              ],
+            ),
+          ),
+
+          // App Version
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Version 1.0.0',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 12,
+              ),
+            ),
+          ),
         ],
       ),
-      );
+    );
+  }
 
-
+  Widget _buildListTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 8),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: Colors.blue.shade800),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        onTap: onTap,
+        hoverColor: Colors.blue.shade50,
+      ),
+    );
   }
 }
