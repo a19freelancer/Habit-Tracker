@@ -6,7 +6,7 @@ class AboutAppScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'About Habit Tracker',
+          'About Treat Budget',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -28,23 +28,23 @@ class AboutAppScreen extends StatelessWidget {
               SizedBox(height: 32),
               _buildFeatureCard(
                 icon: Icons.add_task_rounded,
-                title: 'Create Habit',
+                title: 'Create Budget',
                 description:
-                    'Easily create new habits and set personalized goals',
+                    'Easily create new budgets and set personalized goals',
                 color: Colors.green.shade600,
               ),
               SizedBox(height: 16),
               _buildFeatureCard(
                 icon: Icons.delete_forever_rounded,
-                title: 'Delete Habit',
-                description: 'Remove habits that are no longer relevant',
+                title: 'Delete Budget',
+                description: 'Remove budgets that are no longer relevant',
                 color: Colors.red.shade600,
               ),
               SizedBox(height: 16),
               _buildFeatureCard(
                 icon: Icons.update_rounded,
-                title: 'Replan Habit',
-                description: 'Adjust schedules for better habit management',
+                title: 'Replan Budget',
+                description: 'Adjust schedules for better budget management',
                 color: Colors.orange.shade600,
               ),
               SizedBox(height: 16),
@@ -65,7 +65,7 @@ class AboutAppScreen extends StatelessWidget {
               _buildFeatureCard(
                 icon: Icons.notifications_active_rounded,
                 title: 'Reminders',
-                description: 'Never miss a habit with smart notifications',
+                description: 'Never miss a budget with smart notifications',
                 color: Colors.teal.shade600,
               ),
               SizedBox(height: 24),

@@ -89,7 +89,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Habit Tracker',
+      title: 'Treat Budget',
       initialRoute: '/splash',
       getPages: Routes.routes,
     );

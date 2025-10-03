@@ -115,10 +115,15 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: _willPop,
-      child: Scaffold(
+        child: GestureDetector(               // 👈 Add this
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              FocusScope.of(context).unfocus(); // 👈 This closes keyboard
+            },
+            child: Scaffold(
         appBar: AppBar(
           title: Text(
-            widget.initialHabit != null ? 'Edit Habit' : 'Create New Habit',
+            widget.initialHabit != null ? 'Edit Budget' : 'Create New Budget',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -159,7 +164,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     return TextFormField(
       controller: _habitNameController,
       decoration: InputDecoration(
-        labelText: 'Habit Name',
+        labelText: 'Budget Name',
         floatingLabelStyle: TextStyle(color: Colors.blue.shade800),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -169,13 +174,13 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.blue.shade800, width: 2),
         ),
-        hintText: 'Enter habit name...',
+        hintText: 'Enter budget name...',
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
       style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Please enter a habit name';
+          return 'Please enter a budget name';
         }
         return null;
       },
@@ -351,7 +356,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
         ),
         onPressed: _totalDaysPerMonth > 0 ? _addOrUpdateHabit : null,
         child: Text(
-          'Save Habit',
+          'Save Budget',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,

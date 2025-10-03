@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
         SpeedDialChild(
           child: Icon(Icons.add, color: Colors.blue.shade800),
           backgroundColor: Colors.white,
-          label: 'Add New Habit',
+          label: 'Add New Budget',
           labelStyle: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -88,7 +88,7 @@ class HomeScreen extends StatelessWidget {
         SpeedDialChild(
           child: Icon(Icons.settings, color: Colors.blue.shade800),
           backgroundColor: Colors.white,
-          label: 'Manage Habits',
+          label: 'Manage Budgets',
           labelStyle: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -122,13 +122,25 @@ class _HabitsGroupedByDayState extends State<HabitsGroupedByDay> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: DBHelper().watchHabitsByUser(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          // Log to console for devs
+          debugPrint('DB Stream Error: ${snapshot.error}');
+          // Show user-visible fallback
+          return Center(
+            child: Text(
+              '⚠️ Oops! Something went wrong loading budgets.',
+              style: TextStyle(fontSize: 16, color: Colors.red.shade600),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(
-              child: Text('😊 You have no habits.',
+              child: Text('😊 You have no budgets.',
                   style: TextStyle(fontSize: 18, color: Colors.grey)));
         }
 
