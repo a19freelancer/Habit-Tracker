@@ -7,10 +7,6 @@ import 'Routes/routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final localTimeNow = DateTime.now();
-  print("🕒 Device Local Time: $localTimeNow");
-  await initializeNotifications();
-  await scheduleTestNotification();
 
   runApp(MyApp());
 }
@@ -89,7 +85,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Habit Tracker',
+      title: 'Treat Budget',
       initialRoute: '/splash',
       getPages: Routes.routes,
     );

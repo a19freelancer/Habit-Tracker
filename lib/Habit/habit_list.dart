@@ -9,7 +9,7 @@ class MyHabitsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your Habits',
+        title: const Text('Your Budgets',
             style: TextStyle(
                 fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: 1.1)),
         backgroundColor: Colors.blue.shade800,
@@ -61,12 +61,12 @@ class _HabitsListState extends State<HabitsList> {
                 Icon(Icons.emoji_emotions_outlined,
                     size: 60, color: Colors.grey.shade400),
                 SizedBox(height: 16),
-                Text('No habits found',
+                Text('No budgets found',
                     style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey.shade600,
                         fontWeight: FontWeight.w500)),
-                Text('Tap + to create new habits',
+                Text('Tap + to create new budgets',
                     style:
                         TextStyle(fontSize: 14, color: Colors.grey.shade500)),
               ],
@@ -246,7 +246,7 @@ class _HabitsListState extends State<HabitsList> {
                 Icon(Icons.delete_forever_outlined,
                     size: 40, color: Colors.red.shade400),
                 SizedBox(height: 16),
-                Text('Delete Habit?',
+                Text('Delete Budget?',
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                 SizedBox(height: 8),

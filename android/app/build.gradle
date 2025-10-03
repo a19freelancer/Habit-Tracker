@@ -26,7 +26,7 @@ if (flutterVersionName == null) {
 android {
     namespace "com.example.habit_track"
     compileSdk flutter.compileSdkVersion
-    ndkVersion flutter.ndkVersion
+    ndkVersion '29.0.14033849'
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
