@@ -157,7 +157,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
           ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildHabitNameField() {

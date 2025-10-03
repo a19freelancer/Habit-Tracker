@@ -61,12 +61,12 @@ class _HabitsListState extends State<HabitsList> {
                 Icon(Icons.emoji_emotions_outlined,
                     size: 60, color: Colors.grey.shade400),
                 SizedBox(height: 16),
-                Text('No budgets found',
+                Text('No budget found',
                     style: TextStyle(
                         fontSize: 18,
                         color: Colors.grey.shade600,
                         fontWeight: FontWeight.w500)),
-                Text('Tap + to create new budgets',
+                Text('Tap + to create new budget',
                     style:
                         TextStyle(fontSize: 14, color: Colors.grey.shade500)),
               ],

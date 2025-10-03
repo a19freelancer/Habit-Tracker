@@ -97,7 +97,7 @@ class AboutAppScreen extends StatelessWidget {
         ),
         SizedBox(height: 12),
         Text(
-          'A powerful tool to build and maintain positive budgets through:',
+          'A powerful tool to build and maintain positive habits through:',
           style: TextStyle(
             fontSize: 16,
             color: Colors.grey.shade600,
